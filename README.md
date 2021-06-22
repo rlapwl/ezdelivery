@@ -227,24 +227,24 @@
 분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트와 파이선으로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 808n 이다)
 
 # eks cluster 생성
-```
+```sh
 $ eksctl create cluster --name user05ssb --version 1.17 --nodegroup-name standard-workers --node-type t3.medium --nodes 4 --nodes-min 1 --nodes-max 4
 ```
 # eks cluster 설정
-```
+```sh
 aws eks --region ap-northeast-2 update-kubeconfig --name user05ssb
 kubectl config current-context
 ```
 # metric server 설치
-```
+```sh
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml
 ```
 # kafka 설치
-```
+```sh
 helm install --name my-kafka --namespace kafka incubator/kafka
 ```
 # istio 설치
-```
+```sh
 kubectl apply -f install/kubernetes/istio-demo.yaml
 ```
 # kiali service type 변경
@@ -391,7 +391,7 @@ CQRS는 Command and Query Responsibility Segregation(명령과 조회의 책임 
 
 리뷰 및 주문/결재/배달 등  Status 에 대하여 점주 및 고객이 조회 할 수 있도록 CQRS 로 구현하였다.
 
-```
+```java
 @Service
 public class MypageViewHandler {
 
@@ -456,7 +456,7 @@ public class MypageViewHandler {
 1. gateway 스프링부트 App을 추가 후 application.yaml내에 각 마이크로 서비스의 routes 를 추가하고 gateway 서버의 포트를 8080 으로 설정함
 - application.yaml 예시
 
-```
+```yaml
 spring:
   profiles: docker
   cloud:
