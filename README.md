@@ -193,7 +193,7 @@
 
 ![완성된1차모형수정_기능검증2](https://user-images.githubusercontent.com/84304227/122170121-2b8f1100-ceb9-11eb-9495-68bd020af57d.png)
 
-    
+
     - 수정된 모델은 모든 요구사항을 커버함.
 
 ### 비기능 요구사항에 대한 검증
@@ -210,7 +210,7 @@
 ![최종소스기반모델링](https://user-images.githubusercontent.com/84304227/122336179-635c8e00-cf77-11eb-9b4b-98c6b672c650.PNG)
 
 ## 헥사고날 아키텍처 다이어그램 도출
-    
+
 ![헥사고날아키텍처_new](https://user-images.githubusercontent.com/84304227/122347692-4464f880-cf85-11eb-8567-c58a622aa929.png)
 
 
@@ -384,8 +384,8 @@ replicaset.apps/mypage-85757d849d     1         1         1       133m
 replicaset.apps/order-69b7cc6bf4      1         1         1       30m
 replicaset.apps/payment-57f7cc657f    1         1         1       4h57m
 replicaset.apps/store-7986b6c9db      1         1         1       8h
-  ```
-  
+```
+
 ## CQRS
 CQRS는 Command and Query Responsibility Segregation(명령과 조회의 책임 분리)을 나타냅니다.
 
@@ -451,7 +451,7 @@ public class MypageViewHandler {
 ```
 
 ![CQRS](https://user-images.githubusercontent.com/84304227/122797773-cabd6980-d2fa-11eb-8f7b-180ad3ce057b.PNG)
-  
+
 ## API 게이트웨이
 1. gateway 스프링부트 App을 추가 후 application.yaml내에 각 마이크로 서비스의 routes 를 추가하고 gateway 서버의 포트를 8080 으로 설정함
 - application.yaml 예시
@@ -516,9 +516,9 @@ server:
 주문을 취소하면 다시 연관된 Strore, 주문, 결제(Payment) 등의 서비스의 상태값 등의 데이터가 변경되는 것을 확인할 수 있습니다.
 
   ![safa_주문현황](https://user-images.githubusercontent.com/84304227/122799334-8f239f00-d2fc-11eb-9dcf-292fa8487269.PNG)
-  
+
   ![결재현황](https://user-images.githubusercontent.com/84304227/122799356-96e34380-d2fc-11eb-898a-e20d05bceab5.PNG)
-  
+
 
 
 ## DDD(Domain-Driven Design) 의 적용
@@ -653,7 +653,7 @@ public interface PaymentRepository extends PagingAndSortingRepository<Payment, L
 }
 ```
 - 적용 후 REST API 의 테스트
-```
+```sh
 # app 서비스의 주문처리
 http POST localhost:8080/orders storeId=1 storeName="동네치킨" host="요기요" menuName="치킨두마리" price=22000 guestName="홍길동" status="주문됨" guestAddress="광화문1번지" orderNumber=10 orderDateTime="20210615"
 
@@ -677,7 +677,7 @@ http localhost:8080/orders/1
 
 - 결제서비스를 호출하기 위하여 Stub과 (FeignClient) 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
 
-```
+```java
 #  PaymentService.java
 
 package ezdelivery.external;
@@ -692,35 +692,35 @@ public interface PaymentService {
 ```
 
 - 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
-```
-# Order.java (Entity)
+```java
+// Order.java (Entity)
 
-    @PostPersist
-    public void onPostPersist(){
+@PostPersist
+public void onPostPersist(){
 
-        ezdelivery.external.Payment payment = new ezdelivery.external.Payment();
-        BeanUtils.copyProperties(this, payment);
-        payment.setOrderId(getId());
+	ezdelivery.external.Payment payment = new ezdelivery.external.Payment();
+	BeanUtils.copyProperties(this, payment);
+	payment.setOrderId(getId());
 
-        payment.setPayAmt(getPrice() * getOrderNumber());
-        payment.setPayDate(new SimpleDateFormat("YYYYMMdd").format(new Date()));
-        payment.setStatus("결재승인");
+	payment.setPayAmt(getPrice() * getOrderNumber());
+	payment.setPayDate(new SimpleDateFormat("YYYYMMdd").format(new Date()));
+	payment.setStatus("결재승인");
 
-        try {
-            OrderApplication.applicationContext.getBean(ezdelivery.external.PaymentService.class).makePay(payment);
-        
-        }catch(Exception e) {
-            throw new RuntimeException("결제서비스 호출 실패입니다."+e.getLocalizedMessage());
-            //e.printStackTrace();
-        }
+	try {
+		OrderApplication.applicationContext.getBean(ezdelivery.external.PaymentService.class).makePay(payment);
 
-        // 결제까지 완료되면 최종적으로 예약 완료 이벤트 발생
-        Ordered ordered = new Ordered();
-        BeanUtils.copyProperties(this, ordered);
-        ordered.setStatus("결재승인");
-        ordered.publishAfterCommit();
+	}catch(Exception e) {
+		throw new RuntimeException("결제서비스 호출 실패입니다."+e.getLocalizedMessage());
+		//e.printStackTrace();
+	}
 
-    }
+	// 결제까지 완료되면 최종적으로 예약 완료 이벤트 발생
+	Ordered ordered = new Ordered();
+	BeanUtils.copyProperties(this, ordered);
+	ordered.setStatus("결재승인");
+	ordered.publishAfterCommit();
+
+}
 ```
 
 - 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인:
@@ -735,7 +735,7 @@ public interface PaymentService {
 - 주문실패
 ![payment동기식호출실패](https://user-images.githubusercontent.com/84304227/122171998-4b273900-cebb-11eb-880c-79cf316934fa.PNG)
 
-```
+```sh
 #결제서비스 재기동
 cd payment
 mvn spring-boot:run
@@ -752,10 +752,10 @@ mvn spring-boot:run
 
 
 결제가 이루어진 후에 상점시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 상점 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
- 
+
 - 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
- 
-```
+
+```java
 package ezdelivery;
 
 @Entity
@@ -776,7 +776,7 @@ public class Payment {
 ```
 - 상점 서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
 
-```
+```java
 package ezdelivery;
 
 ...
@@ -798,8 +798,8 @@ public class PolicyHandler{
 
 ```
 실제 구현을 하자면, 카톡 등으로 점주는 노티를 받고, 요리를 마친후, 주문 상태를 UI에 입력할테니, 우선 주문정보를 DB에 받아놓은 후, 이후 처리는 해당 Aggregate 내에서 하면 되겠다.:
-  
-```
+
+```java
   @Autowired 주문관리Repository 주문관리Repository;
   
   @StreamListener(KafkaProcessor.INPUT)
@@ -817,7 +817,7 @@ public class PolicyHandler{
 ```
 
 상점 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 상점시스템이 유지보수로 인해 잠시 내려간 상태라도 주문을 받는데 문제가 없다:
-```
+```sh
 # 상점 서비스 (mypage) 를 잠시 내려놓음 (ctrl+c)
 
 
@@ -942,7 +942,7 @@ $ aws ecr create-repository --repository-name user08-ezdelivery-delivery --regio
 ```
 
 * image build & push
-```
+```sh
 $ cd gateway
 $ mvn package
 $ docker build -t 052937454741.dkr.ecr.ap-northeast-2.amazonaws.com/user08-ezdelivery-gateway:latest .
@@ -977,11 +977,10 @@ $ cd ../delivery
 $ mvn package
 $ docker build -t 052937454741.dkr.ecr.ap-northeast-2.amazonaws.com/user08-ezdelivery-delivery:latest .
 $ docker push 052937454741.dkr.ecr.ap-northeast-2.amazonaws.com/user08-ezdelivery-delivery:latest
-
 ```
 
 * Deploy
-```
+```sh
 $ kubectl apply -f siege.yaml
 $ kubectl apply -f configmap.yaml
 $ kubectl apply -f gateway.yaml
@@ -991,7 +990,6 @@ $ kubectl apply -f payment.yaml
 $ kubectl apply -f mypage.yaml
 $ kubectl apply -f delivery.yaml
 $ kubectl apply -f alarm.yaml
-
 ```
 ## CI/CD 설정
 
@@ -1006,41 +1004,43 @@ pipeline build script 는 각 프로젝트 폴더 이하에 cloudbuild.yml 에 �
 
 방식1) 서킷 브레이킹 프레임워크의 선택: istio-injection + DestinationRule
 
-```
-kubectl get ns -L istio-injection
-kubectl label namespace ezdelivery istio-injection=enabled
+```sh
+$ kubectl get ns -L istio-injection
+$ kubectl label namespace ezdelivery istio-injection=enabled
 ````
 - 예약, 결제 서비스 모두 아무런 변경 없음
 - 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
 - 동시사용자 100명, 60초 동안 실시
 
-```
-kubectl run siege --image=apexacme/siege-nginx -n ezdelivery
-kubectl exec -it siege -c siege -n ezdelivery -- /bin/bash
-siege -c100 -t60S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo"}'
+```sh
+$ kubectl run siege --image=apexacme/siege-nginx -n ezdelivery
+$ kubectl exec -it siege -c siege -n ezdelivery -- /bin/bash
+$ siege -c100 -t60S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo"}'
 ```
 서킷 브레이킹을 위한 DestinationRule 적용
 
-```
-cd ezdelivery/yaml
-kubectl apply -f dr-pay.yaml
+```sh
+$ cd ezdelivery/yaml
+$ kubectl apply -f dr-pay.yaml
 ```
 DestinationRule 적용되어 서킷 브레이킹 동작 확인 (kiali 화면)
 
+![서킷브레이커](https://user-images.githubusercontent.com/14067833/122865602-a052c700-d361-11eb-8da5-8fc9ca94f8d6.PNG)
+
 
 다시 부하 발생하여 DestinationRule 적용 제거하여 정상 처리 확인
-```
-cd ezdelivery/yaml
-kubectl delete -f dr-pay.yaml
+```sh
+$ cd ezdelivery/yaml
+$ kubectl delete -f dr-pay.yaml
 ```
 
 
 방식2) 서킷 브레이킹 프레임워크의 선택: Spring FeignClient + Hystrix 옵션을 사용하여 구현함
 
-시나리오는 주문(order)-->결제(pay) 시의 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 결제 요청이 과도할 경우 CB 를 통하여 장애격리.
+시나리오는 주문(order) --> 결제(pay) 시의 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 결제 요청이 과도할 경우 CB 를 통하여 장애격리.
 
 - Hystrix 를 설정:  요청처리 쓰레드에서 처리시간이 610 밀리가 넘어서기 시작하여 어느정도 유지되면 CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
-```
+```yaml
 # order_application.yml
 
 feign:
@@ -1051,163 +1051,160 @@ hystrix:
   command:
     default:
       execution.isolation.thread.timeoutInMilliseconds: 610
-      
-kubectl apply -f order_cb.yaml
 ```
 
 
-```
+```sh
+$ kubectl apply -f yaml/order_cb.yaml
 
-cd ezdelivery/yaml
-kubectl apply -f dr-pay.yaml
+$ kubectl apply -f yaml/dr-pay.yaml
 
-istio-injection 활성화 및 pod container 확인
-kubectl get ns -L istio-injection
-kubectl label namespace ezdelivery istio-injection=enabled 
-
-
+$ istio-injection 활성화 및 pod container 확인
+$ kubectl get ns -L istio-injection
+$ kubectl label namespace ezdelivery istio-injection=enabled 
 ```
 
 - 피호출 서비스(결제:pay) 의 임의 부하 처리 - 400 밀리에서 증감 220 밀리 정도 왔다갔다 하게
-```
+```java
 # (pay) 결제이력.java (Entity)
 
-    @PrePersist
-    public void onPrePersist(){  //결제이력을 저장한 후 적당한 시간 끌기
+@PrePersist
+public void onPrePersist(){  //결제이력을 저장한 후 적당한 시간 끌기
 
-        ...
-        
-        try {
-            Thread.currentThread().sleep((long) (400 + Math.random() * 220));
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
+...
+
+	try {
+		Thread.currentThread().sleep((long) (400 + Math.random() * 220));
+	} catch (InterruptedException e) {
+		e.printStackTrace();
+	}
+}
 ```
 
 istio-injection 적용 (기 적용완료)
+```sh
+$ kubectl label namespace ezdelivery istio-injection=enabled
 ```
-kubectl label namespace ezdelivery istio-injection=enabled
-  
-```
-* 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인:
+* 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인
+
+![부하주기-seige명령어](https://user-images.githubusercontent.com/14067833/122865521-7bf6ea80-d361-11eb-9a1a-dfbb8433d0ed.PNG)
+
 - 동시사용자 100명
 - 60초 동안 실시
 
-```
+```sh
 kubectl exec -it siege -c siege -n ezdelivery -- /bin/bash
 $ siege -c100 -t60S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo"}'
-$siege -c50 -t120S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo", price:1000, orderNumber:2 }'
+$siege -c50 -t120S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo", "price": 1000, "orderNumber": 2 }'
 ** SIEGE 4.0.5
 ** Preparing 100 concurrent users for battle.
 The server is now under siege...
 
-HTTP/1.1 201     0.68 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.68 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.73 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.75 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.77 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.97 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.81 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.87 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.12 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.16 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.17 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.26 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.25 secs:     207 bytes ==> POST http://localhost:8081/orders
+HTTP/1.1 201     0.68 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     0.68 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     0.73 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     0.75 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     0.77 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     0.97 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     0.81 secs:     207 bytes ==> POST http://order:80801/orders
+HTTP/1.1 201     0.87 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.12 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.16 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.17 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.26 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.25 secs:     207 bytes ==> POST http://order:8080/orders
 
 * 요청이 과도하여 CB를 동작함 요청을 차단
 
-HTTP/1.1 500     1.29 secs:     248 bytes ==> POST http://localhost:8081/orders   
-HTTP/1.1 500     1.24 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     1.23 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     1.42 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     2.08 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.29 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     1.24 secs:     248 bytes ==> POST http://localhost:8081/orders
+HTTP/1.1 500     1.29 secs:     248 bytes ==> POST http://order:8080/orders   
+HTTP/1.1 500     1.24 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     1.23 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     1.42 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     2.08 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.29 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     1.24 secs:     248 bytes ==> POST http://order:8080/orders
 
 * 요청을 어느정도 돌려보내고나니, 기존에 밀린 일들이 처리되었고, 회로를 닫아 요청을 다시 받기 시작
 
-HTTP/1.1 201     1.46 secs:     207 bytes ==> POST http://localhost:8081/orders  
-HTTP/1.1 201     1.33 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.36 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.63 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.65 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.68 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.69 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.71 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.71 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.74 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.76 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     1.79 secs:     207 bytes ==> POST http://localhost:8081/orders
+HTTP/1.1 201     1.46 secs:     207 bytes ==> POST http://order:8080/orders  
+HTTP/1.1 201     1.33 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.36 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.63 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.65 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.68 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.69 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.71 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.71 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.74 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.76 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     1.79 secs:     207 bytes ==> POST http://order:8080/orders
 
 * 다시 요청이 쌓이기 시작하여 건당 처리시간이 610 밀리를 살짝 넘기기 시작 => 회로 열기 => 요청 실패처리
 
-HTTP/1.1 500     1.93 secs:     248 bytes ==> POST http://localhost:8081/orders    
-HTTP/1.1 500     1.92 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     1.93 secs:     248 bytes ==> POST http://localhost:8081/orders
+HTTP/1.1 500     1.93 secs:     248 bytes ==> POST http://order:8080/orders    
+HTTP/1.1 500     1.92 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     1.93 secs:     248 bytes ==> POST http://order:8080/orders
 
 * 생각보다 빨리 상태 호전됨 - (건당 (쓰레드당) 처리시간이 610 밀리 미만으로 회복) => 요청 수락
 
-HTTP/1.1 201     2.24 secs:     207 bytes ==> POST http://localhost:8081/orders  
-HTTP/1.1 201     2.32 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.16 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.19 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.19 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.19 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.21 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.29 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.30 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.38 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.59 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.61 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.62 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     2.64 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.01 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.27 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.33 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.45 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.52 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.57 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.69 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.70 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.69 secs:     207 bytes ==> POST http://localhost:8081/orders
+HTTP/1.1 201     2.24 secs:     207 bytes ==> POST http://order:8080/orders  
+HTTP/1.1 201     2.32 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.16 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.19 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.19 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.19 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.21 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.29 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.30 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.38 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.59 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.61 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.62 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     2.64 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.01 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.27 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.33 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.45 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.52 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.57 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.69 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.70 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.69 secs:     207 bytes ==> POST http://order:8080/orders
 
 * 이후 이러한 패턴이 계속 반복되면서 시스템은 도미노 현상이나 자원 소모의 폭주 없이 잘 운영됨
 
 
-HTTP/1.1 500     4.76 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.23 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.76 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.74 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.82 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.82 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.84 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.66 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     5.03 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.22 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.19 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.18 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.69 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.65 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     5.13 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.84 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.25 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.25 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.80 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.87 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.33 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.86 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.96 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.34 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 500     4.04 secs:     248 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.50 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.95 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.54 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     4.65 secs:     207 bytes ==> POST http://localhost:8081/orders
-
+HTTP/1.1 500     4.76 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.23 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.76 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.74 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.82 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.82 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.84 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.66 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     5.03 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.22 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.19 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.18 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.69 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.65 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     5.13 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.84 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.25 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.25 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.80 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.87 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.33 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.86 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.96 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.34 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 500     4.04 secs:     248 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.50 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.95 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.54 secs:     207 bytes ==> POST http://order:8080/orders
+HTTP/1.1 201     4.65 secs:     207 bytes ==> POST http://order:8080/orders
 
 :
 :
@@ -1235,59 +1232,81 @@ Shortest transaction:	        0.00
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
 - (istio injection 적용한 경우) istio injection 적용 해제
-```
-kubectl label namespace ezdelivery istio-injection=disabled --overwrite
+```sh
+$ kubectl label namespace ezdelivery istio-injection=disabled --overwrite
 
-kubectl apply -f order.yaml
-kubectl apply -f payment.yaml
+$ kubectl apply -f order.yaml
+$ kubectl apply -f payment.yaml
 ```
 
 - 결제서비스 배포시 resource 설정 적용되어 있음
-```
-    spec:
-      containers:
-          ...
-          resources:
-            limits:
-              cpu: 500m
-            requests:
-              cpu: 200m
+```yaml
+spec:
+  containers:
+    ...
+    resources:
+      limits:
+        cpu: 500m
+          requests:
+            cpu: 200m
 ```
 
 - 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
-```
-kubectl autoscale deploy payment -n ezdelivery --min=1 --max=10 --cpu-percent=15
-#kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
+```sh
+$ kubectl autoscale deploy payment -n ezdelivery --min=1 --max=10 --cpu-percent=15
+# kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
+
 $ kubectl get deploy auth -n ezdelivery -w 
 ```
-- CB 에서 했던 방식대로 워크로드를 2분 동안 걸어준다.
-```
-siege -c100 -t120S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo"}'
+- CB 에서 했던 방식대로 워크로드를 1분 동안 걸어준다.
+```sh
+$ siege -c10 -t60S -r10 --content-type "application/json" 'http://payment:8080/payments POST {"storeName": "yogiyo"}' -v
 ```
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
+
+```sh
+$ kubectl get deploy payment -w -n ezdelivery 
+$ kubectl get deploy payment -w
 ```
-kubectl get deploy order -w -n ezdelivery 
-kubectl get deploy order -w
-```
+
 - 어느정도 시간이 흐른 후 (약 30초) 스케일 아웃이 벌어지는 것을 확인할 수 있다:
+
 ```
 NAME    DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-pay     1         1         1            1           17s
-pay     1         2         1            1           45s
-pay     1         4         1            1           1m
+payment  1         1         1            1           17s
+payment  1         2         1            1           45s
+payment  1         4         1            1           1m
 :
 ```
+
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다. 
-```
-Transactions:		        5078 hits
+
+```sh
+Transactions:		       5078 hits
 Availability:		       92.45 %
-Elapsed time:		       120 secs
-Data transferred:	        0.34 MB
-Response time:		        5.60 secs
-Transaction rate:	       17.15 trans/sec
+Elapsed time:		       60 secs
+Data transferred:	    0.34 MB
+Response time:		    5.60 secs
+Transaction rate:	    17.15 trans/sec
 Throughput:		        0.01 MB/sec
-Concurrency:		       96.02
+Concurrency:		      96.02
 ```
+
+
+
+- HPA 적용
+
+![hpa적용내용 확인](https://user-images.githubusercontent.com/14067833/122867061-ec067000-d363-11eb-81c7-2bedffa9e90d.PNG)
+
+- payment에 부하를 준다.
+
+![payment에 부하주기](https://user-images.githubusercontent.com/14067833/122867331-456e9f00-d364-11eb-9219-7037eeb54249.PNG)
+
+- 스케일 아웃이 발생한걸 볼 수 있다.
+
+![hpa적용으로 payment pod늘어남(1)](https://user-images.githubusercontent.com/14067833/122867385-5cad8c80-d364-11eb-89a1-0322100daf1c.PNG)
+
+
 
 
 ## 무정지 재배포
@@ -1295,8 +1314,8 @@ Concurrency:		       96.02
 * 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함(위의 시나리오에서 제거되었음)
 
 - seige 로 배포작업 직전에 워크로드를 모니터링 함.
-```
-siege -c100 -t120S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo"}'
+```sh
+$ siege -c100 -t120S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo"}'
 
 ** SIEGE 4.0.5
 ** Preparing 100 concurrent users for battle.
@@ -1311,8 +1330,8 @@ HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://localhost:8081/orders
 ```
 
 - # 컨테이너 이미지 Update (readness, liveness 미설정 상태)
-```
-- kubectl apply -f order_na.yaml 실행
+```sh
+$ kubectl apply -f order_na.yaml
 ```
 
 - seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
