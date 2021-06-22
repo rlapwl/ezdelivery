@@ -307,7 +307,7 @@ $ docker build -t 740569282574.dkr.ecr.eu-central-1.amazonaws.com/user05-ezdeliv
 $ docker push 740569282574.dkr.ecr.eu-central-1.amazonaws.com/user05-ezdelivery-delivery:latest
 
 # ezdelivery deploy
-cd ezdelivery/yaml
+$ cd ezdelivery/yaml
 $ kubectl apply -f siege.yaml
 $ kubectl apply -f configmap.yaml
 $ kubectl apply -f gateway.yaml
@@ -319,13 +319,13 @@ $ kubectl apply -f delivery.yaml
 $ kubectl apply -f alarm.yaml
 ```
 # ezdelivery gateway service type 변경
-```
+```shell
 $ kubectl edit service/gateway -n mybnb
 (ClusterIP -> LoadBalancer)
 ```
 
 현황
-```
+```shell
 $ kubectl get ns
 NAME              STATUS   AGE
 default           Active   12h
@@ -842,30 +842,30 @@ http localhost:8080/orders     # 모든 주문의 상태가
 # 환경구성
 
 * EKS Cluster create
-```
+```shell
 $ eksctl create cluster --name skccuer10-Cluster --version 1.15 --nodegroup-name standard-workers --node-type t3.medium --nodes 3 --nodes-min 1 --nodes-max 4
 ```
 
 * EKS Cluster settings
-```
+```shell
 $ aws eks --region ap-northeast-2 update-kubeconfig --name skccuer10-Cluster
 $ kubectl config current-context
 $ kubectl get all
 ```
 
 * ECR 인증
-```
+```shell
 $ aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 052937454741.dkr.ecr.ap-northeast-2.amazonaws.com
 ```
 
 * Metric Server 설치
-```
+```shell
 $ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.3.6/components.yaml
 $ kubectl get deployment metrics-server -n kube-system
 ```
 
 * Kafka install (kubernetes/helm)
-```
+```shell
 $ curl https://raw.githubusercontent.com/kubernetes/helm/master/scripts/get | bash
 $ kubectl --namespace kube-system create sa tiller      
 $ kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
@@ -878,7 +878,7 @@ $ kubectl get all -n kafka
 ```
 
 * Istio 설치
-```
+```shell
 $ curl -L https://git.io/getLatestIstio | ISTIO_VERSION=1.4.5 sh -
 $ cd istio-1.4.5
 $ export PATH=$PWD/bin:$PATH
@@ -896,7 +896,7 @@ $ kubectl edit service/kiali -n istio-system
 ```
 
 * Namespace 생성
-```
+```shell
 $ kubectl create namespace ezdelivery
 ```
 
@@ -908,15 +908,15 @@ $ kubectl label namespace ezdelivery istio-injection=enabled
 ```
 
 * siege deploy
-```
-cd ezdelivery/yaml
-kubectl apply -f siege.yaml 
-kubectl exec -it siege -n ezdelivery -- /bin/bash
-apt-get update
-apt-get install httpie
+```shell
+$ cd ezdelivery/yaml
+$ kubectl apply -f siege.yaml 
+$ kubectl exec -it siege -n ezdelivery -- /bin/bash
+$ apt-get update
+$ apt-get install httpie
 ```
 
-```
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -930,7 +930,7 @@ spec:
 # Build & Deploy
 
 * ECR image repository
-```
+```shell
 $ aws ecr create-repository --repository-name user08-ezdelivery-gateway --region ap-northeast-2
 $ aws ecr create-repository --repository-name user08-ezdelivery-store --region ap-northeast-2
 $ aws ecr create-repository --repository-name user08-ezdelivery-order --region ap-northeast-2
@@ -942,7 +942,7 @@ $ aws ecr create-repository --repository-name user08-ezdelivery-delivery --regio
 ```
 
 * image build & push
-```sh
+```shell
 $ cd gateway
 $ mvn package
 $ docker build -t 052937454741.dkr.ecr.ap-northeast-2.amazonaws.com/user08-ezdelivery-gateway:latest .
@@ -980,7 +980,7 @@ $ docker push 052937454741.dkr.ecr.ap-northeast-2.amazonaws.com/user08-ezdeliver
 ```
 
 * Deploy
-```sh
+```shell
 $ kubectl apply -f siege.yaml
 $ kubectl apply -f configmap.yaml
 $ kubectl apply -f gateway.yaml
@@ -1398,7 +1398,7 @@ Request/Response 방식으로 구현하지 않았기 때문에 서비스가 더�
 * [비교] 결제 (pay) 마이크로서비스의 경우 API 변화나 Retire 시에 app(주문) 마이크로 서비스의 변경을 초래함:
 
 예) API 변화시
-```
+```java
 # Order.java (Entity)
 
     @PostPersist
@@ -1419,7 +1419,7 @@ Request/Response 방식으로 구현하지 않았기 때문에 서비스가 더�
 ```
 
 예) Retire 시
-```
+```java
 # Order.java (Entity)
 
     @PostPersist
