@@ -1082,7 +1082,7 @@ public void onPrePersist(){  //결제이력을 저장한 후 적당한 시간 �
 ```
 
 istio-injection 적용 (기 적용완료)
-```sh
+```shell
 $ kubectl label namespace ezdelivery istio-injection=enabled
 ```
 * 부하테스터 siege 툴을 통한 서킷 브레이커 동작 확인
@@ -1092,7 +1092,7 @@ $ kubectl label namespace ezdelivery istio-injection=enabled
 - 동시사용자 100명
 - 60초 동안 실시
 
-```sh
+```shell
 kubectl exec -it siege -c siege -n ezdelivery -- /bin/bash
 $ siege -c100 -t60S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo"}'
 $siege -c50 -t120S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo", "price": 1000, "orderNumber": 2 }'
@@ -1232,7 +1232,7 @@ Shortest transaction:	        0.00
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
 - (istio injection 적용한 경우) istio injection 적용 해제
-```sh
+```shell
 $ kubectl label namespace ezdelivery istio-injection=disabled --overwrite
 
 $ kubectl apply -f order.yaml
@@ -1252,19 +1252,19 @@ spec:
 ```
 
 - 결제서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 15프로를 넘어서면 replica 를 10개까지 늘려준다:
-```sh
+```shell
 $ kubectl autoscale deploy payment -n ezdelivery --min=1 --max=10 --cpu-percent=15
 # kubectl autoscale deploy order --min=1 --max=10 --cpu-percent=15
 
 $ kubectl get deploy auth -n ezdelivery -w 
 ```
 - CB 에서 했던 방식대로 워크로드를 1분 동안 걸어준다.
-```sh
+```shell
 $ siege -c10 -t60S -r10 --content-type "application/json" 'http://payment:8080/payments POST {"storeName": "yogiyo"}' -v
 ```
 - 오토스케일이 어떻게 되고 있는지 모니터링을 걸어둔다:
 
-```sh
+```shell
 $ kubectl get deploy payment -w -n ezdelivery 
 $ kubectl get deploy payment -w
 ```
@@ -1281,10 +1281,10 @@ payment  1         4         1            1           1m
 
 - siege 의 로그를 보아도 전체적인 성공률이 높아진 것을 확인 할 수 있다. 
 
-```sh
-Transactions:		       5078 hits
-Availability:		       92.45 %
-Elapsed time:		       60 secs
+```shell
+Transactions:		      1140 hits
+Availability:		      100 %
+Elapsed time:		      60 secs
 Data transferred:	    0.34 MB
 Response time:		    5.60 secs
 Transaction rate:	    17.15 trans/sec
@@ -1314,60 +1314,67 @@ Concurrency:		      96.02
 * 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함(위의 시나리오에서 제거되었음)
 
 - seige 로 배포작업 직전에 워크로드를 모니터링 함.
-```sh
-$ siege -c100 -t120S -r10 --content-type "application/json" 'http://order:8080/orders POST {"storeName": "yogiyo"}'
+```shell
+$ siege -c100 -t120S -r10 --content-type "application/json" 'http://payment:8080/payments POST {"storeName": "yogiyo"}'
 
 ** SIEGE 4.0.5
 ** Preparing 100 concurrent users for battle.
 The server is now under siege...
 
-HTTP/1.1 201     0.68 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.68 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://localhost:8081/orders
-HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://localhost:8081/orders
+HTTP/1.1 201     0.68 secs:     207 bytes ==> POST http://payment:8080/payments
+HTTP/1.1 201     0.68 secs:     207 bytes ==> POST http://payment:8080/payments
+HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://payment:8080/payments
+HTTP/1.1 201     0.70 secs:     207 bytes ==> POST http://payment:8080/payments
 :
-
 ```
 
-- # 컨테이너 이미지 Update (readness, liveness 미설정 상태)
-```sh
-$ kubectl apply -f order_na.yaml
+
+
+### 컨테이너 이미지 Update (readness, liveness 미설정 상태)
+
+- Readness probe 미설정 상태 후 적용
+
+![1  readiness probe 미설정상태](https://user-images.githubusercontent.com/14067833/122872527-8918d700-d36b-11eb-8c6d-0b88c6547540.PNG)
+
+```shell
+$ kubectl apply -f payment.yaml
 ```
 
-- seige 의 화면으로 넘어가서 Availability 가 100% 미만으로 떨어졌는지 확인
+- seige 의 화면으로 넘어가서 payment에 부하를 준다.
+
+```shell
+# siege -c10 -t60s -r10 --content-type "application/json" 'http://payment:8080/payments POST {"storeName": "yogiyo"}' -v
 ```
+
+- Availability 가 100% 미만으로 떨어졌는지 확인
+
+```shell
 Transactions:		        3078 hits
 Availability:		       70.45 %
-Elapsed time:		       120 secs
-Data transferred:	        0.34 MB
-Response time:		        5.60 secs
-Transaction rate:	       17.15 trans/sec
+Elapsed time:		       60 secs
+Data transferred:	     0.34 MB
+Response time:		     5.60 secs
+Transaction rate:	    17.15 trans/sec
 Throughput:		        0.01 MB/sec
 Concurrency:		       96.02
-
-```
-배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함:
-
 ```
 
-# deployment.yaml 의 readiness probe 의 설정:
-- kubectl apply -f order.yaml 실행
-```
+- 배포기간중 Availability 가 평소 100%에서 70% 대로 떨어지는 것을 확인. 원인은 쿠버네티스가 성급하게 새로 올려진 서비스를 READY 상태로 인식하여 서비스 유입을 진행한 것이기 때문. 이를 막기위해 Readiness Probe 를 설정함:
+- readiness 설정
 
-- 동일한 시나리오로 재배포 한 후 Availability 확인:
-```
-Transactions:		        3078 hits
-Availability:		       100 %
-Elapsed time:		       120 secs
-Data transferred:	        0.34 MB
-Response time:		        5.60 secs
-Transaction rate:	       17.15 trans/sec
-Throughput:		        0.01 MB/sec
-Concurrency:		       96.02
+![3  readiness 설정](https://user-images.githubusercontent.com/14067833/122872719-ce3d0900-d36b-11eb-9ea4-29530fc4fd73.PNG)
 
-```
+- 버전업 후 배포를 한다.
 
-배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
+![4  버전업배포](https://user-images.githubusercontent.com/14067833/122872813-f0cf2200-d36b-11eb-989d-43eca122cfb4.PNG)
+
+- seige 화면으로 넘어가서 payment java 버전업 배포 후에도 Availability 100프로 유지하는 걸 볼 수 있다.
+
+![5 payment java 버전업 배포후에도 seige availablity 100프로 유지](https://user-images.githubusercontent.com/14067833/122872953-28d66500-d36c-11eb-852c-52a2a23a639d.PNG)
+
+- 배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
+
+
 
 
 # 신규 개발 조직의 추가
